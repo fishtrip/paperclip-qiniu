@@ -12,10 +12,10 @@ module Paperclip
         end unless defined?(::Qiniu)
 
         base.instance_eval do
-          unless @options[:url].to_s.match(/^:fog.*url$/)
-            @options[:path]  = @options[:path].gsub(/:url/, @options[:url])
-            @options[:url]   = ':qiniu_public_url'
-          end
+          # unless @options[:url].to_s.match(/^:qiniu.*url$/)
+          #   @options[:path]  = @options[:path].gsub(/:url/, @options[:url]).gsub(/\A:rails_root\/public\/system\//, '')
+          #   @options[:url]   = ':qiniu_public_url'
+          # end
           Paperclip.interpolates(:qiniu_public_url) do |attachment, style|
             attachment.public_url(style)
           end unless Paperclip::Interpolations.respond_to? :qiniu_public_url
@@ -53,18 +53,36 @@ module Paperclip
         @queued_for_delete = []
       end
 
-      def public_url(style = default_style)
+      def public_url(style = nil)
+        style = style.to_s if style.is_a?(Symbol)
+        style = "-#{style}" if style
+        
         init
+
         if @options[:qiniu_host]
-          "#{dynamic_fog_host_for_style(style)}/#{path(style)}"
+          if @options[:private]
+            url = "#{@options[:qiniu_host]}/#{path(:original)}"
+            ::Qiniu.download_url url
+          else
+            the_url = "#{@options[:qiniu_host]}/#{path(:original)}#{style}"
+            unless style
+              download_token = ::Qiniu.generate_download_token pattern: the_url.gsub('http://', '')
+              the_url << "?token=#{download_token}"
+            end
+            the_url
+          end
         else
-          res = ::Qiniu.get(bucket, path(style))
+          res = ::Qiniu.get(bucket, path(:original))
           if res
-            res["url"]
+            "#{res["url"]}#{style}"
           else
             nil
           end
         end
+      end
+      
+      def url(style = nil)
+        public_url(style)
       end
 
       private
@@ -75,11 +93,12 @@ module Paperclip
         inited = true
       end
 
-      def upload(file, path)
+      def upload(file, qiniu_key)
+        log("upload file: #{qiniu_key}")
         upload_token = ::Qiniu.generate_upload_token :scope => bucket
         opts = {:uptoken            => upload_token,
                  :file               => file.path,
-                 :key                => path,
+                 :key                => qiniu_key,
                  :bucket             => bucket,
                  :mime_type          => file.content_type,
                  :enable_crc32_check => true}
@@ -92,13 +111,6 @@ module Paperclip
         @options[:bucket] || raise("bucket is nil")
       end
 
-      def dynamic_fog_host_for_style(style)
-        if @options[:qiniu_host].respond_to?(:call)
-          @options[:qiniu_host].call(self)
-        else
-          @options[:qiniu_host]
-        end
-      end
     end
   end
 end

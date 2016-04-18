@@ -2,11 +2,11 @@
 require File.expand_path('../lib/paperclip-qiniu/version', __FILE__)
 
 Gem::Specification.new do |gem|
-  gem.authors       = ["LI Daobing"]
-  gem.email         = ["lidaobing@gmail.com"]
+  gem.authors       = ["YuanPing"]
+  gem.email         = ["yp.xjgz@gmail.com"]
   gem.description   = %q{paperclip plugin for qiniu}
   gem.summary       = %q{paperclip plugin for qiniu}
-  gem.homepage      = "https://github.com/lidaobing/paperclip-qiniu"
+  gem.homepage      = "https://github.com/yuanping/paperclip-qiniu"
 
   gem.files         = `git ls-files`.split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
@@ -15,6 +15,6 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = Paperclip::Qiniu::VERSION
   gem.add_dependency 'paperclip'
-  gem.add_dependency 'qiniu', '~> 6.4.1'
+  gem.add_dependency 'qiniu', '~> 6.5.1'
   gem.add_development_dependency 'rspec'
 end
