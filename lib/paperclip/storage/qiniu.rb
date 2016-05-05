@@ -66,7 +66,7 @@ module Paperclip
           else
             the_url = "#{@options[:qiniu_host]}/#{path(:original)}#{style}"
             unless style
-              download_token = ::Qiniu.generate_download_token pattern: the_url.gsub('http://', '')
+              download_token = ::Qiniu.generate_download_token pattern: the_url.gsub('http://', ''), expires_in: 60#(3600 * 3)
               the_url << "?token=#{download_token}"
             end
             the_url
